@@ -1,8 +1,8 @@
 use email_newsletter_axum::run;
-use std::net::{SocketAddr, TcpListener};
+use std::net::{TcpListener};
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
-    let port = TcpListener::bind("127.0.0.1:0").unwrap();
-    run(port).await
+    let listener = TcpListener::bind("127.0.0.1:3000").unwrap();
+    run(listener).await
 }
