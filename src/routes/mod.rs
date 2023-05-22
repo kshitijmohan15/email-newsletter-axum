@@ -9,7 +9,7 @@ async fn hello_world() -> &'static str {
 }
 
 async fn hc_handler() -> &'static str {
-    "Hey"
+    "Hi Papa"
 }
 #[derive(Deserialize)]
 struct FormData {
