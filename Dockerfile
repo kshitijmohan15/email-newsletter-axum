@@ -7,9 +7,9 @@ RUN cargo build --release
 RUN rm src/*.rs
 
 ADD . ./
-
 RUN rm ./target/release/deps/email_newsletter_axum*
 RUN cargo build --release
+RUN find . ! -path "./target/release/email_newsletter_axum" -delete
 
 
 FROM debian:buster-slim

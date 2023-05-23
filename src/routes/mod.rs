@@ -5,11 +5,11 @@ use axum::{
 use serde::Deserialize;
 
 async fn hello_world() -> &'static str {
-    "Hello, World!"
+    "Hi Mama!"
 }
 
 async fn hc_handler() -> &'static str {
-    "Hi Papa"
+    "Hello, World!"
 }
 #[derive(Deserialize)]
 struct FormData {
