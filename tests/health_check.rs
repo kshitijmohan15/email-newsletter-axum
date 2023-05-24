@@ -14,7 +14,7 @@ async fn health_check_works() {
     // checking if the health check always returns a 200
     assert!(response.status().is_success());
     // making sure that the health check’s response has no body
-    assert_eq!(Some(3), response.content_length());
+    assert_eq!(Some(13), response.content_length());
 }
 
 #[tokio::test]
