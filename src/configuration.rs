@@ -1,5 +1,3 @@
-use std::error::Error;
-
 use config::{Config, File, FileFormat, ConfigError};
 
 #[derive(serde::Deserialize, Debug)]
