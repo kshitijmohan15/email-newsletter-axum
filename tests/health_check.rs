@@ -34,8 +34,9 @@ async fn subscribe_returns_200_for_valid_form_data() {
     assert_eq!(200, response.status().as_u16())
 }
 
+// desrialization errors lead to 422 errors in axum (https://github.com/tokio-rs/axum/issues/1680)
 #[tokio::test]
-async fn subscribe_returns_400_when_data_is_missing() {
+async fn subscribe_returns_422_when_data_is_missing() {
     let app_addr = spawn_app();
     let client = reqwest::Client::new();
     let test_cases = vec![
@@ -54,10 +55,10 @@ async fn subscribe_returns_400_when_data_is_missing() {
             .expect("Failed to execute request.");
         // Assert
         assert_eq!(
-            400,
+            422,
             response.status().as_u16(),
             // Additional customised error message on test failure
-            "The API did not fail with 400 Bad Request when the payload was {}.",
+            "The API did not fail with 422 Bad Request when the payload was {}.",
             error_message
         )
     }
@@ -66,7 +67,7 @@ async fn subscribe_returns_400_when_data_is_missing() {
 fn spawn_app() -> String {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let port = listener.local_addr().unwrap().port();
-    let server = email_newsletter_axum::run(listener);
+    let server = email_newsletter_axum::startup::run(listener);
     let _ = tokio::spawn(server);
     format!("http://127.0.0.1:{}", port)
 }
