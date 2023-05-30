@@ -1,7 +1,6 @@
 use axum::Form;
 use serde::Deserialize;
 
-
 #[derive(Deserialize)]
 pub struct FormData {
     name: String,

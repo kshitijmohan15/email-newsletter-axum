@@ -8,7 +8,6 @@ mod subscriptions;
 pub use healthcheck::*;
 pub use subscriptions::*;
 
-
 async fn hello_world() -> &'static str {
     "Hi Mama!"
 }

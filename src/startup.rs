@@ -1,5 +1,5 @@
-use std::net::TcpListener;
 use crate::routes::create_routes;
+use std::net::TcpListener;
 
 pub async fn run(listener: TcpListener) -> Result<(), std::io::Error> {
     let app = create_routes();

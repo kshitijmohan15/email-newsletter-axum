@@ -3,11 +3,10 @@ use std::net::TcpListener;
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
-    // let config = build_configuration().expect("Not looking good bruv");
-    // let configs = Res{settings: config.try_into()?};
-    let config = get_config().expect("Could not fetch config");
-    let listener = TcpListener::bind(format!("0.0.0.0:{}", config.settings.application_port))
+    let config = get_config();
+    let listener = TcpListener::bind(format!("0.0.0.0:{}", config.unwrap().application.port))
         .expect("Bind nahi ho paaya");
     let finally = run(listener).await;
     finally
+    // only readx yaml file as configuration
 }
