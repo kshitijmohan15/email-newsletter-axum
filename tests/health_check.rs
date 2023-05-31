@@ -1,12 +1,14 @@
+use email_newsletter_axum::configuration::get_config;
 // this test is framework and language proof. If tomorrow i decided that I want to ditch Rust and go back to NodeJS, I can use this same test suite to keep track of my API endpoints, we would just have to change the way we spawn the app, example: change the bash script that must run before the tests begin.
+use sqlx::{PgPool};
 use std::net::TcpListener;
 
 #[tokio::test]
 async fn health_check_works() {
-    let addr = spawn_app();
+    let app = spawn_app().await;
     let client = reqwest::Client::new();
     let response = client
-        .get(&format!("{}/healthcheck", addr))
+        .get(&format!("{}/healthcheck", app.address))
         .send()
         .await
         .expect("Failed to execute request");
@@ -17,26 +19,33 @@ async fn health_check_works() {
 }
 
 #[tokio::test]
-async fn subscribe_returns_200_for_valid_form_data() {
-    let app_addr = spawn_app();
+async fn subscribe_returns_a_200_for_valid_form_data() {
+    // Arrange
+    let app = spawn_app().await;
     let client = reqwest::Client::new();
     let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
-    println!("Bhai {}", format!("{}/subscriptions", &app_addr));
+    // Act
     let response = client
-        .post(&format!("{}/subscriptions", &app_addr))
+        .post(&format!("{}/subscriptions", &app.address))
         .header("Content-Type", "application/x-www-form-urlencoded")
         .body(body)
         .send()
         .await
-        .expect("Failed to execute request");
-    // print!("Error hai {:?}", response.error_for_status());
-    assert_eq!(200, response.status().as_u16())
+        .expect("Failed to execute request.");
+    // Assert
+    assert_eq!(200, response.status().as_u16());
+    let saved = sqlx::query!("SELECT email, name FROM subscriptions")
+        .fetch_one(&app.db_pool)
+        .await
+        .expect("Failed to fetch saved subscription.");
+    assert_eq!(saved.email, "ursula_le_guin@gmail.com");
+    assert_eq!(saved.name, "le guin");
 }
 
 // desrialization errors lead to 422 errors in axum (https://github.com/tokio-rs/axum/issues/1680)
 #[tokio::test]
 async fn subscribe_returns_422_when_data_is_missing() {
-    let app_addr = spawn_app();
+    let app = spawn_app().await;
     let client = reqwest::Client::new();
     let test_cases = vec![
         ("name=le%20guin", "missing the email"),
@@ -46,7 +55,7 @@ async fn subscribe_returns_422_when_data_is_missing() {
     for (invalid_body, error_message) in test_cases {
         // Act
         let response = client
-            .post(&format!("{}/subscriptions", &app_addr))
+            .post(&format!("{}/subscriptions", &app.address))
             .header("Content-Type", "application/x-www-form-urlencoded")
             .body(invalid_body)
             .send()
@@ -62,11 +71,23 @@ async fn subscribe_returns_422_when_data_is_missing() {
         )
     }
 }
-
-fn spawn_app() -> String {
-    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+pub struct TestApp {
+    pub address: String,
+    pub db_pool: PgPool,
+}
+// The function is asynchronous now!
+async fn spawn_app() -> TestApp {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind random port");
     let port = listener.local_addr().unwrap().port();
-    let server = email_newsletter_axum::startup::run(listener);
+    let address = format!("http://127.0.0.1:{}", port);
+    let configuration = get_config().expect("Failed to read configuration.");
+    let connection_pool = PgPool::connect(&configuration.database.connection_string())
+        .await
+        .expect("Failed to connect to Postgres.");
+    let server = email_newsletter_axum::startup::run(listener, connection_pool.clone());
     let _ = tokio::spawn(server);
-    format!("http://127.0.0.1:{}", port)
+    TestApp {
+        address,
+        db_pool: connection_pool,
+    }
 }

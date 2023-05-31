@@ -21,14 +21,7 @@ config = "0.13.3"
 [dependencies.sqlx]
 version = "0.5.7"
 default-features = false
-features = [
-    "runtime-async-std-native-tls",
-    "macros",
-    "postgres",
-    "uuid",
-    "chrono",
-    "migrate",
-]
+features = ["runtime-tokio-rustls", "macros", "postgres", "uuid", "chrono", "migrate", "offline"]
 
 
 [[bin]]
