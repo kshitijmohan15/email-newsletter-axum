@@ -1,5 +1,4 @@
-
-use sqlx::PgPool;
+use sqlx::{PgConnection, PgPool};
 
 use crate::routes::create_routes;
 use std::{net::TcpListener, sync::Arc};

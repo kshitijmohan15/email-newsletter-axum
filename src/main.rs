@@ -1,5 +1,5 @@
 use email_newsletter_axum::{configuration::get_config, startup::run};
-use sqlx::PgPool;
+use sqlx::{PgConnection, Connection, PgPool};
 use std::net::TcpListener;
 
 #[tokio::main]
@@ -8,10 +8,10 @@ async fn main() -> Result<(), std::io::Error> {
     let address = format!("127.0.0.1:{}", config.application.port);
     let listener = TcpListener::bind(address)?;
     println!("{:?}", &config.database.connection_string());
-    let connection_pool = PgPool::connect(&config.database.connection_string())
-        .await
-        .expect("Failed to connect to Postgres.");
+    let connection = PgPool::connect(&config.database.connection_string())
+    .await
+    .expect("Failed to connect to Postgres.");
 
-    let finally = run(listener, connection_pool).await;
+    let finally = run(listener, connection).await;
     finally
 }

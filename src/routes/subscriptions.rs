@@ -1,8 +1,9 @@
+use crate::routes::AppState;
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Form};
+use chrono::Utc;
+use::uuid::Uuid as NewId;
 use serde::Deserialize;
 use std::ops::Deref;
-
-use crate::routes::AppState;
 
 #[derive(Deserialize)]
 pub struct FormData {
@@ -15,18 +16,19 @@ pub async fn subscription_handler(
     user: Option<Form<FormData>>,
 ) -> impl IntoResponse {
     let Form(form) = user.unwrap();
-    let db_ref = state.connection.as_ref();
+    let db = state.connection.as_ref();
+    let uuid_final = NewId::new_v4();
     match sqlx::query!(
         r#"
         INSERT INTO subscriptions (id, email, name, subscribed_at)
         VALUES ($1, $2, $3, $4)
         "#,
-        Uuid::new_v4(),
+        uuid_final as NewId,
         form.email,
         form.name,
         Utc::now()
     )
-    .execute(db_ref)
+    .execute(db)
     .await
     {
         Ok(_) => (StatusCode::ACCEPTED, format!("Done: ")),
@@ -35,6 +37,6 @@ pub async fn subscription_handler(
             (StatusCode::NOT_FOUND, format!("Not Found: "))
         }
     };
-    println!("{:?}", db_ref.deref());
+    println!("{:?}", db.deref());
     format!("Hey {} of email {}", form.name, form.email)
 }
