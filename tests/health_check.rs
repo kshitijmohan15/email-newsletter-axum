@@ -1,7 +1,10 @@
 use email_newsletter_axum::configuration::get_config;
 // this test is framework and language proof. If tomorrow i decided that I want to ditch Rust and go back to NodeJS, I can use this same test suite to keep track of my API endpoints, we would just have to change the way we spawn the app, example: change the bash script that must run before the tests begin.
-use sqlx::{PgPool};
+use rand;
+use rand::{distributions::Alphanumeric, Rng};
+use sqlx::PgPool;
 use std::net::TcpListener;
+// use tracing_subscriber::fmt::format;
 
 #[tokio::test]
 async fn health_check_works() {
@@ -23,7 +26,12 @@ async fn subscribe_returns_a_200_for_valid_form_data() {
     // Arrange
     let app = spawn_app().await;
     let client = reqwest::Client::new();
-    let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
+    let n1: String = rand::thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(7)
+        .map(char::from)
+        .collect();
+    let body = format!("name=le%20guin&email=ursula_le_guin%{}gmail.com", n1);
     // Act
     let response = client
         .post(&format!("{}/subscriptions", &app.address))

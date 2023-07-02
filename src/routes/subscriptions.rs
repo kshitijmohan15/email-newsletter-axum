@@ -1,14 +1,46 @@
 use crate::routes::AppState;
 use ::uuid::Uuid as NewId;
-use axum::{extract::State, http::StatusCode, response::IntoResponse, Form};
+use axum::{extract::State, http::StatusCode, response::IntoResponse, Form, Json};
 use chrono::Utc;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 use uuid::Uuid;
 
 #[derive(Deserialize)]
 pub struct FormData {
     name: String,
     email: String,
+}
+
+#[derive(Debug, FromRow, Deserialize, Serialize)]
+pub struct GetFormData {
+    pub id: Uuid,
+    pub name: String,
+    pub email: String,
+}
+pub async fn get_all_subscribers(State(state): State<AppState>) -> impl IntoResponse {
+    let db = state.connection.as_ref();
+
+    let query_result = sqlx::query_as!(GetFormData, "SELECT id, email, name FROM subscriptions")
+        .fetch_all(db)
+        .await;
+
+    if query_result.is_err() {
+        let error_response = serde_json::json!({
+            "status": "fail",
+            "message": "Something bad happened while fetching all note items",
+        });
+        return Err((StatusCode::INTERNAL_SERVER_ERROR, Json(error_response)));
+    }
+
+    let subscribers = query_result.unwrap();
+
+    let json_response = serde_json::json!({
+        "status": "success",
+        "results": subscribers.len(),
+        "subscribers": subscribers
+    });
+    Ok(Json(json_response))
 }
 
 pub async fn subscription_handler(
@@ -49,5 +81,3 @@ pub async fn subscription_handler(
     };
     response
 }
-
-

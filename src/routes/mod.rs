@@ -27,5 +27,6 @@ pub fn create_routes(connection: Arc<PgPool>) -> Router {
         .route("/", get(hello_world))
         .route("/healthcheck", get(hc_handler))
         .route("/subscriptions", post(subscription_handler))
-        .with_state(state.clone())
+        .route("/subscriptions", get(get_all_subscribers))
+        .with_state(state)
 }

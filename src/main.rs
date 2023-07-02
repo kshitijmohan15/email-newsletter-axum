@@ -16,10 +16,10 @@ async fn main() -> Result<(), std::io::Error> {
     let listener = TcpListener::bind(address)?;
     println!("{:?}", &config.database.connection_string());
 
-    let connection = PgPool::connect(&config.database.connection_string())
-        .await
-        .expect("Failed to connect to Postgres.");
-
-    run(listener, connection).await.unwrap();
+    let connection = PgPool::connect(&config.database.connection_string()).await;
+    if connection.is_ok() {
+        println!("✅ Connection to the database is successful!");
+    }
+    run(listener, connection.unwrap()).await.unwrap();
     Ok(())
 }
