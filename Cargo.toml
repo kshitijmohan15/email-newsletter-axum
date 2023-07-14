@@ -37,3 +37,6 @@ rand = "0.8.5"
 [[bin]]
 path = "src/main.rs"
 name = "email_newsletter_axum"
+
+[dev-dependencies]
+once_cell = "1.18.0"

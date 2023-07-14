@@ -1,10 +1,18 @@
 use email_newsletter_axum::configuration::get_config;
+use email_newsletter_axum::telemetry::{get_subscriber, init_subscriber};
+use once_cell::sync::Lazy;
 // this test is framework and language proof. If tomorrow i decided that I want to ditch Rust and go back to NodeJS, I can use this same test suite to keep track of my API endpoints, we would just have to change the way we spawn the app, example: change the bash script that must run before the tests begin.
 use rand;
 use rand::{distributions::Alphanumeric, Rng};
 use sqlx::PgPool;
 use std::net::TcpListener;
 // use tracing_subscriber::fmt::format;
+
+// Ensure that the `tracing` stack is only initialised once using `once_cell`
+static TRACING: Lazy<()> = Lazy::new(|| {
+    let subscriber = get_subscriber("test".into(), "debug".into(), std::io::stdout);
+    init_subscriber(subscriber);
+});
 
 #[tokio::test]
 async fn health_check_works() {
@@ -79,6 +87,8 @@ pub struct TestApp {
 }
 // The function is asynchronous now!
 async fn spawn_app() -> TestApp {
+    Lazy::force(&TRACING);
+
     let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind random port");
     let port = listener.local_addr().unwrap().port();
     let address = format!("http://127.0.0.1:{}", port);
