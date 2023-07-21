@@ -17,6 +17,7 @@ pub struct GetFormData {
     pub name: String,
     pub email: String,
 }
+
 pub async fn get_all_subscribers(State(state): State<AppState>) -> impl IntoResponse {
     let db = state.connection.as_ref();
 
@@ -41,44 +42,7 @@ pub async fn get_all_subscribers(State(state): State<AppState>) -> impl IntoResp
     });
     Ok(Json(json_response))
 }
-// #[tracing::instrument(
-//     name = "Adding a new subsscriber",
-//     skip(user, state),
-//     fields(
-//     request_id = %Uuid::new_v4(),
-//     subscriber_email = %user.email,
-//     subscriber_name= %user.name
-//     )
-//     )]
 
-// pub async fn subscription_handler(
-//     State(state): State<AppState>,
-//     user: Form<FormData>,
-// ) -> impl IntoResponse {
-//     let db = state.connection.as_ref();
-//     let uuid_final = NewId::new_v4();
-
-//     let response = match sqlx::query!(
-//         r#"
-//         INSERT INTO subscriptions (id, email, name, subscribed_at)
-//         VALUES ($1, $2, $3, $4)
-//         "#,
-//         uuid_final as NewId,
-//         user.email,
-//         user.name,
-//         Utc::now()
-//     )
-//     .execute(db)
-//     .await
-//     {
-//         Ok(res) => (StatusCode::OK, format!("Done: {:?}", res)).into_response(),
-//         Err(e) => {
-//             tracing::error!("Failed to execute query: {:?}", e);
-//             (StatusCode::INTERNAL_SERVER_ERROR, format!("{}", e)).into_response()
-//         }
-//     };
-//     response
-// }
 #[tracing::instrument(
     name = "Adding a new subscriber",
     skip(form, state),
@@ -100,7 +64,11 @@ pub async fn subscribe(State(state): State<AppState>, form: Form<FormData>) -> i
 }
 #[tracing::instrument(
     name = "Saving new subscriber details in the database",
-    skip(form, pool)
+    skip(form, pool),
+    fields(
+        subscriber_email = %form.email,
+        subscriber_name = %form.name
+    )
 )]
 pub async fn insert_subscriber(pool: &Pool<Postgres>, form: &FormData) -> Result<(), sqlx::Error> {
     sqlx::query!(
@@ -120,7 +88,6 @@ pub async fn insert_subscriber(pool: &Pool<Postgres>, form: &FormData) -> Result
         e
         // Using the `?` operator to return early
         // if the function failed, returning a sqlx::Error
-        // We will talk about error handling in depth later!
     })?;
     Ok(())
 }
